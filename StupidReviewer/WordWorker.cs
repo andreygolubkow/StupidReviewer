@@ -14,7 +14,6 @@ namespace StupidReviewer
     public class WordWorker : IDisposable
     {
         private readonly WordprocessingDocument _document;
-        private string _comment;
         private string _author;
         private string _initials;
 
@@ -25,9 +24,9 @@ namespace StupidReviewer
         /// <param name="comment">Комментарий, который будет вставлен.</param>
         /// <param name="author">Автор комментариев.</param>
         /// <param name="initials">Инициалы автора комментариев.</param>
-        public WordWorker(string fileName, string comment = "Bad word:", string author = "Word Worker", string initials = "WW")
+        public WordWorker(string fileName,IEnumerable<WordMessagePair> badWords, string author = "Word Worker", string initials = "WW")
         {
-            _comment = comment;
+            BadWords = badWords;
             _author = author;
             _initials = initials;
             _document = WordprocessingDocument.Open(fileName, true);
@@ -37,7 +36,7 @@ namespace StupidReviewer
         /// Плохие слова. При их обнаружении будет вставлен комментарий, далее слово,
         /// которое было найдено.
         /// </summary>
-        public IEnumerable<string> BadWords = new List<string>();
+        public IEnumerable<WordMessagePair> BadWords { get; }
 
         public void DoWord()
         {
@@ -45,11 +44,11 @@ namespace StupidReviewer
             {
                 foreach (Run childElement in openXmlElement.ChildElements.OfType<Run>())
                 {
-                    foreach (string badWord in BadWords)
+                    foreach (WordMessagePair badWord in BadWords)
                     {
-                        if ( childElement.InnerText.ToLower().Contains(badWord.ToLower()) )
+                        if ( childElement.InnerText.ToLower().Contains(badWord.Word.ToLower()) )
                         {
-                            AddComment(childElement, _comment+' '+badWord.ToLower());
+                            AddComment(childElement, badWord.Message);
                         }
                     }
                 }

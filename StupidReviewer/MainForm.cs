@@ -19,6 +19,7 @@ namespace StupidReviewer
     public partial class MainForm : Form
     {
         private List<string> _documents = new List<string>();
+        private List<WordMessagePair> _words = new List<WordMessagePair>();
 
         public MainForm()
         {
@@ -47,12 +48,7 @@ namespace StupidReviewer
                 ShowError("Need initials.");
                 return;
             }
-            if ( commentTextBox.Text.Length == 0 )
-            {
-                ShowError("Need comment.");
-                return;
-            }
-            if ( badWordsTextBox.Text.Length == 0 )
+            if ( _words.Count == 0 )
             {
                 ShowError("Need bad  words.");
                 return;
@@ -63,13 +59,13 @@ namespace StupidReviewer
                 return;
             }
 
-            using (var worker = new WordWorker(_documents.First())
-                                {
-                                        BadWords = badWordsTextBox.Lines
-                                })
+            _documents.AsParallel().ForAll(d =>
             {
-                worker.DoWord();
-            }
+                using (var worker = new WordWorker(_documents.First(),_words))
+                {
+                    worker.DoWord();
+                }
+            });
         }
 
         private void ShowError(string text)
@@ -87,7 +83,7 @@ namespace StupidReviewer
                     proj = JsonConvert.DeserializeObject<Project>(reader.ReadToEnd());    
                 }
 
-                if ( proj.BadWords.Length==0)
+                if ( proj.BadWords.Count==0)
                 {
                     proj = Project.DefaultProject;
                 }
@@ -97,27 +93,26 @@ namespace StupidReviewer
                 proj = Project.DefaultProject;
             }
             LoadProject(proj);
+            wordMessagePairBindingSource.DataSource = _words;
         }
 
         private void LoadProject(Project project)
         {
             authorTextBox.Text = project.Author;
             initialsTextBox.Text = project.Initials;
-            commentTextBox.Text = project.Comment;
-            badWordsTextBox.Lines = project.BadWords;
+            _words = project.BadWords;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if ( badWordsTextBox.Text.Length != 0 )
+            if ( _words.Count != 0 )
             {
                 using (StreamWriter writer = new StreamWriter("settings.wson"))
                 {
                     writer.Write(JsonConvert.SerializeObject(new Project()
                                                              {
                                                                      Author = authorTextBox.Text,
-                                                                     BadWords = badWordsTextBox.Lines,
-                                                                     Comment = commentTextBox.Text,
+                                                                     BadWords = _words,
                                                                      Initials = initialsTextBox.Text
                                                              }));
                 }

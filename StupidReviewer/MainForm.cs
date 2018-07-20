@@ -66,6 +66,7 @@ namespace StupidReviewer
                     worker.DoWord();
                 }
             });
+            MessageBox.Show("Done!");
         }
 
         private void ShowError(string text)

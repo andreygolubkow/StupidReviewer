@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StupidReviewer", "StupidReviewer\StupidReviewer.csproj", "{E296EEBB-54EA-451E-8F67-B86EE797026B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E296EEBB-54EA-451E-8F67-B86EE797026B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E296EEBB-54EA-451E-8F67-B86EE797026B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E296EEBB-54EA-451E-8F67-B86EE797026B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E296EEBB-54EA-451E-8F67-B86EE797026B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3702DB07-F8F2-47DD-89AF-44EDD133F187}
+	EndGlobalSection
+EndGlobal

@@ -61,7 +61,7 @@ namespace StupidReviewer
 
             _documents.AsParallel().ForAll(d =>
             {
-                using (var worker = new WordWorker(_documents.First(),_words))
+                using (var worker = new WordWorker(d,_words))
                 {
                     worker.DoWord();
                 }

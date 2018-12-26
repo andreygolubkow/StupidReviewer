@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -40,18 +40,32 @@ namespace StupidReviewer
 
         public void DoWord()
         {
+            var dictionary = new Dictionary<Run, string>();
             foreach (Paragraph openXmlElement in _document.MainDocumentPart.Document.Descendants<Paragraph>())
             {
                 foreach (Run childElement in openXmlElement.ChildElements.OfType<Run>())
                 {
                     foreach (WordMessagePair badWord in BadWords)
                     {
-                        if ( childElement.InnerText.ToLower().Contains(badWord.Word.ToLower()) )
+                        //if (childElement.InnerText.ToLower().Contains(badWord.Word.ToLower()) )
+                        if (Regex.IsMatch(childElement.InnerText.ToLower(), $"\\b{badWord.Word.ToLower()}\\b"))
                         {
-                            AddComment(childElement, badWord.Message);
+                            if (dictionary.ContainsKey(childElement/*openXmlElement*/))
+                            {
+                                dictionary[childElement] += $" {badWord.Message}";
+                            }
+                            else
+                            {
+                                dictionary.Add(childElement, badWord.Message);
+                            }
                         }
                     }
                 }
+            }
+
+            foreach (var pair in dictionary)
+            {
+                AddComment(pair.Key, pair.Value);
             }
         }
 
@@ -65,17 +79,23 @@ namespace StupidReviewer
 
         #endregion
 
-        private void AddComment(Run textPart, string comment)
+        private void AddComment(/*Paragraph textPart, */Run textPoint, string comment)
         {
+            Paragraph textPart = textPoint.Parent as Paragraph;
+            if (textPart == null)
+            {
+                return;
+            }
             Comments comments = null;
             string id = "0";
 
             // Verify that the document contains a 
             // WordProcessingCommentsPart part; if not, add a new one.
-            if ( _document.MainDocumentPart.GetPartsCountOfType<WordprocessingCommentsPart>() > 0 )
+            if (_document.MainDocumentPart.GetPartsCountOfType<WordprocessingCommentsPart>() > 0)
             {
-                comments = _document.MainDocumentPart.WordprocessingCommentsPart.Comments;
-                if ( comments.HasChildren )
+                comments =
+                    _document.MainDocumentPart.WordprocessingCommentsPart.Comments;
+                if (comments.HasChildren)
                 {
                     // Obtain an unused ID.
                     id = comments.Descendants<Comment>().Select(e => e.Id.Value).Max();
@@ -84,44 +104,39 @@ namespace StupidReviewer
             else
             {
                 // No WordprocessingCommentsPart part exists, so add one to the package.
-                WordprocessingCommentsPart commentPart = _document.MainDocumentPart.AddNewPart<WordprocessingCommentsPart>();
+                WordprocessingCommentsPart commentPart =
+                    _document.MainDocumentPart.AddNewPart<WordprocessingCommentsPart>();
                 commentPart.Comments = new Comments();
                 comments = commentPart.Comments;
             }
 
             // Compose a new Comment and add it to the Comments part.
             Paragraph p = new Paragraph(new Run(new Text(comment)));
-            Comment cmt = new Comment()
-                          {
-                                  Id = id,
-                                  Author = _author,
-                                  Initials = _initials,
-                                  Date = DateTime.Now
-                          };
+            Comment cmt =
+                new Comment()
+                {
+                    Id = id,
+                    Author = _author,
+                    Initials = _initials,
+                    Date = DateTime.Now
+                };
             cmt.AppendChild(p);
             comments.AppendChild(cmt);
             comments.Save();
+                //Коммент ставить перед Runnom
+            
             // Specify the text range for the Comment. 
             // Insert the new CommentRangeStart before the first run of paragraph.
             textPart.InsertBefore(new CommentRangeStart()
-                               {
-                                       Id = id
-                               },
-                               textPart.ChildElements.First());
-
-            // Insert the new CommentRangeEnd after last run of paragraph.
+            { Id = id }, textPoint);
             var cmtEnd = textPart.InsertAfter(new CommentRangeEnd()
-                                           {
-                                                   Id = id
-                                           },
-                                           textPart.ChildElements.Last());
+                { Id = id }, textPoint);
+            // Insert the new CommentRangeEnd after last run of paragraph.
+
 
             // Compose a run with CommentReference and insert it.
-            textPart.InsertAfter(new Run(new CommentReference()
-                                      {
-                                              Id = id
-                                      }),
-                              cmtEnd);
+            textPart.InsertAfter(new Run(new CommentReference() { Id = id }), cmtEnd);
         }
+
     }
 }
